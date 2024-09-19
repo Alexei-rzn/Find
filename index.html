@@ -58,6 +58,7 @@
     </div>
 
     <button onclick="performSearch()">Поиск</button>
+    <button onclick="resetSearch()">Сброс</button>
 
     <!-- Результаты поиска -->
     <div id="search-results"></div>
@@ -165,6 +166,13 @@
             } else {
                 resultsContainer.innerHTML = '<p>Ничего не найдено</p>';
             }
+        }
+
+        // Функция сброса поиска
+        function resetSearch() {
+            document.getElementById('search-input').value = '';  // Очистка поля поиска
+            document.getElementById('autocomplete-list').innerHTML = '';  // Очистка списка автозаполнения
+            document.getElementById('search-results').innerHTML = '';  // Очистка результатов поиска
         }
 
         // Добавляем слушатель для автозаполнения
