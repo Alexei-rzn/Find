@@ -147,7 +147,7 @@
 
             // Фильтрация данных по выбранному столбцу
             const filteredData = data.filter(item => {
-                return item[searchColumn] && item[searchColumn].toLowerCase().includes(searchInput);
+                return item[searchColumn] && item[searchColumn].toLowerCase() === searchInput;
             });
 
             // Проверка, есть ли результаты
