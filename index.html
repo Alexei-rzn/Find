@@ -25,15 +25,11 @@
 
     <!-- Выпадающий список для выбора столбца поиска -->
     <label for="search-column">Выберите столбец для поиска:</label>
-    <select id="search-column">
-        <!-- Столбцы будут добавлены динамически -->
-    </select>
+    <select id="search-column"></select>
     
     <!-- Выпадающий список для выбора столбцов для вывода -->
     <label for="output-columns">Выберите столбцы для вывода:</label>
-    <select id="output-columns" multiple>
-        <!-- Столбцы будут добавлены динамически -->
-    </select>
+    <select id="output-columns" multiple></select>
 
     <!-- Поле для ввода данных -->
     <label for="search-input">Введите значение для поиска:</label>
@@ -43,31 +39,51 @@
     <div id="search-results"></div>
 
     <script>
-        // Пример данных (вместо загрузки из таблицы Google Sheets)
-        const data = [
-            { 'Штрих-код': '123456', 'Наименование': 'Товар 1', 'Артикул': '001', 'Поддон': 'A1' },
-            { 'Штрих-код': '654321', 'Наименование': 'Товар 2', 'Артикул': '002', 'Поддон': 'B1' },
-            { 'Штрих-код': '789123', 'Наименование': 'Товар 3', 'Артикул': '003', 'Поддон': 'C1' },
-        ];
+        // Ваш URL-адрес опубликованной Google Таблицы
+        const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLbHhfgx3N9KxRC-xklVwoMzxJBjyiVh80WO7DX5U2XFKHZBMlyt4k-3plvF4QDoFdDFYNw9C2fczg/pub?output=csv';
 
-        // Добавление столбцов в выпадающие списки
-        const columns = Object.keys(data[0]);
-        const searchColumnSelect = document.getElementById('search-column');
-        const outputColumnsSelect = document.getElementById('output-columns');
+        let data = [];
 
-        columns.forEach(column => {
-            // Добавление опций для выбора столбца поиска
-            const searchOption = document.createElement('option');
-            searchOption.value = column;
-            searchOption.textContent = column;
-            searchColumnSelect.appendChild(searchOption);
+        // Функция загрузки данных из Google Таблицы
+        async function loadGoogleSheetData() {
+            const response = await fetch(googleSheetURL);
+            const csvData = await response.text();
+            parseCSVData(csvData);
+        }
 
-            // Добавление опций для выбора столбцов вывода
-            const outputOption = document.createElement('option');
-            outputOption.value = column;
-            outputOption.textContent = column;
-            outputColumnsSelect.appendChild(outputOption);
-        });
+        // Функция для парсинга CSV в массив объектов
+        function parseCSVData(csvData) {
+            const rows = csvData.split('\n').map(row => row.split(','));
+            const headers = rows[0];  // Названия столбцов
+            data = rows.slice(1).map(row => {
+                let obj = {};
+                row.forEach((cell, index) => {
+                    obj[headers[index].trim()] = cell.trim();
+                });
+                return obj;
+            });
+            populateDropdowns(headers);  // Заполняем выпадающие списки
+        }
+
+        // Заполнение выпадающих списков столбцами
+        function populateDropdowns(headers) {
+            const searchColumnSelect = document.getElementById('search-column');
+            const outputColumnsSelect = document.getElementById('output-columns');
+
+            headers.forEach(header => {
+                // Добавление опций для поиска
+                const searchOption = document.createElement('option');
+                searchOption.value = header;
+                searchOption.textContent = header;
+                searchColumnSelect.appendChild(searchOption);
+
+                // Добавление опций для вывода
+                const outputOption = document.createElement('option');
+                outputOption.value = header;
+                outputOption.textContent = header;
+                outputColumnsSelect.appendChild(outputOption);
+            });
+        }
 
         // Функция фильтрации значений при вводе символов
         function filterOptions() {
@@ -81,18 +97,30 @@
             const filteredData = data.filter(item => item[searchColumn].toLowerCase().includes(input));
 
             if (filteredData.length > 0) {
-                filteredData.forEach(item => {
-                    let resultHTML = `<p>Найдено в ${searchColumn}: ${item[searchColumn]}<br>`;
-                    outputColumns.forEach(column => {
-                        resultHTML += `${column}: ${item[column]}<br>`;
-                    });
-                    resultHTML += `</p>`;
-                    resultsContainer.innerHTML += resultHTML;
+                let tableHTML = `<table border="1"><tr>`;
+                outputColumns.forEach(column => {
+                    tableHTML += `<th>${column}</th>`;
                 });
+                tableHTML += `</tr>`;
+
+                filteredData.forEach(item => {
+                    tableHTML += `<tr>`;
+                    outputColumns.forEach(column => {
+                        tableHTML += `<td>${item[column]}</td>`;
+                    });
+                    tableHTML += `</tr>`;
+                });
+
+                tableHTML += `</table>`;
+                resultsContainer.innerHTML = tableHTML;
             } else {
                 resultsContainer.innerHTML = '<p>Ничего не найдено</p>';
             }
         }
+
+        // Загружаем данные при загрузке страницы
+        loadGoogleSheetData();
+
     </script>
 
 </body>
