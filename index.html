@@ -18,11 +18,13 @@
             margin-top: 20px;
         }
         .autocomplete-items {
-            position: relative;
+            position: absolute;
             border: 1px solid #d4d4d4;
+            background-color: #fff;
             max-height: 150px; /* Ограничиваем высоту списка */
             overflow-y: auto;  /* Добавляем скролл, если много предложений */
-            background-color: #fff;
+            width: 100%;
+            z-index: 1000;
         }
         .autocomplete-item {
             padding: 10px;
@@ -60,20 +62,20 @@
     <div id="search-results"></div>
 
     <script>
-        // Ваш URL-адрес опубликованной Google Таблицы
+        // URL-адрес опубликованной Google Таблицы (формат CSV)
         const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLbHhfgx3N9KxRC-xklVwoMzxJBjyiVh80WO7DX5U2XFKHZBMlyt4k-3plvF4QDoFdDFYNw9C2fczg/pub?output=csv';
 
         let data = [];
         let filteredSuggestions = [];
 
-        // Функция загрузки данных из Google Таблицы
+        // Загрузка данных из Google Таблицы
         async function loadGoogleSheetData() {
             const response = await fetch(googleSheetURL);
             const csvData = await response.text();
             parseCSVData(csvData);
         }
 
-        // Функция для парсинга CSV в массив объектов
+        // Парсинг CSV данных
         function parseCSVData(csvData) {
             const rows = csvData.split('\n').map(row => row.split(','));
             const headers = rows[0];  // Названия столбцов
@@ -107,14 +109,14 @@
             });
         }
 
-        // Функция фильтрации совпадающих значений для автозаполнения
+        // Фильтрация совпадающих значений для автозаполнения
         function filterSuggestions() {
             const input = document.getElementById('search-input').value.toLowerCase();
             const searchColumn = document.getElementById('search-column').value;
             const autocompleteList = document.getElementById('autocomplete-list');
             autocompleteList.innerHTML = '';  // Очищаем предыдущие предложения
 
-            if (!input) {
+            if (!input || !searchColumn) {
                 return;
             }
 
@@ -133,7 +135,7 @@
             });
         }
 
-        // Функция для выполнения поиска по выбранному значению
+        // Функция выполнения поиска по выбранному значению
         function performSearch() {
             const searchInput = document.getElementById('search-input').value.toLowerCase();
             const searchColumn = document.getElementById('search-column').value;
