@@ -120,7 +120,9 @@
                 return;
             }
 
-            const filteredSuggestions = data.filter(item => item[searchColumn].toLowerCase().includes(input));
+            const filteredSuggestions = data.filter(item => {
+                return item[searchColumn] && item[searchColumn].toLowerCase().includes(input);
+            });
 
             filteredSuggestions.slice(0, 5).forEach(suggestion => {
                 const div = document.createElement('div');
@@ -144,7 +146,9 @@
             resultsContainer.innerHTML = '';
 
             // Фильтрация данных по выбранному столбцу
-            const filteredData = data.filter(item => item[searchColumn].toLowerCase().includes(searchInput));
+            const filteredData = data.filter(item => {
+                return item[searchColumn] && item[searchColumn].toLowerCase().includes(searchInput);
+            });
 
             if (filteredData.length > 0) {
                 let tableHTML = `<table border="1"><tr>`;
