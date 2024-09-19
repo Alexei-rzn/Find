@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поиск по таблице</title>
+    <title>Поиск товара</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -45,12 +45,12 @@
     <script>
         // Пример данных (вместо загрузки из таблицы Google Sheets)
         const data = [
-            { barcode: '123456', name: 'Товар 1', sku: '001', pallet: 'A1' },
-            { barcode: '654321', name: 'Товар 2', sku: '002', pallet: 'B1' },
-            { barcode: '789123', name: 'Товар 3', sku: '003', pallet: 'C1' },
+            { 'Штрих-код': '123456', 'Наименование': 'Товар 1', 'Артикул': '001', 'Поддон': 'A1' },
+            { 'Штрих-код': '654321', 'Наименование': 'Товар 2', 'Артикул': '002', 'Поддон': 'B1' },
+            { 'Штрих-код': '789123', 'Наименование': 'Товар 3', 'Артикул': '003', 'Поддон': 'C1' },
         ];
 
-        // Добавление столбцов в выпадающий список
+        // Добавление столбцов в выпадающие списки
         const columns = Object.keys(data[0]);
         const searchColumnSelect = document.getElementById('search-column');
         const outputColumnsSelect = document.getElementById('output-columns');
@@ -82,11 +82,11 @@
 
             if (filteredData.length > 0) {
                 filteredData.forEach(item => {
-                    let resultHTML = <p>Найдено в ${searchColumn}: ${item[searchColumn]}<br>;
+                    let resultHTML = `<p>Найдено в ${searchColumn}: ${item[searchColumn]}<br>`;
                     outputColumns.forEach(column => {
-                        resultHTML += ${column}: ${item[column]}<br>;
+                        resultHTML += `${column}: ${item[column]}<br>`;
                     });
-                    resultHTML += </p>;
+                    resultHTML += `</p>`;
                     resultsContainer.innerHTML += resultHTML;
                 });
             } else {
