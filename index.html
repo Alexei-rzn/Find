@@ -150,6 +150,7 @@
                 return item[searchColumn] && item[searchColumn].toLowerCase().includes(searchInput);
             });
 
+            // Проверка, есть ли результаты
             if (filteredData.length > 0) {
                 let tableHTML = `<table border="1"><tr>`;
                 outputColumns.forEach(column => {
