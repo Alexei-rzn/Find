@@ -143,7 +143,8 @@
             const resultsContainer = document.getElementById('search-results');
             resultsContainer.innerHTML = '';
 
-            const filteredData = data.filter(item => item[searchColumn].toLowerCase() === searchInput);
+            // Фильтрация данных по выбранному столбцу
+            const filteredData = data.filter(item => item[searchColumn].toLowerCase().includes(searchInput));
 
             if (filteredData.length > 0) {
                 let tableHTML = `<table border="1"><tr>`;
