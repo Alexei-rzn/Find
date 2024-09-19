@@ -21,9 +21,9 @@
             position: absolute;
             border: 1px solid #d4d4d4;
             background-color: #fff;
-            max-height: 150px; /* Ограничиваем высоту списка */
-            overflow-y: auto;  /* Добавляем скролл, если много предложений */
-            width: 100%;
+            max-height: 150px;
+            overflow-y: auto;
+            width: calc(100% - 2px); /* Учитываем ширину рамки */
             z-index: 1000;
         }
         .autocomplete-item {
@@ -62,35 +62,31 @@
     <div id="search-results"></div>
 
     <script>
-        // URL-адрес опубликованной Google Таблицы (формат CSV)
         const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLbHhfgx3N9KxRC-xklVwoMzxJBjyiVh80WO7DX5U2XFKHZBMlyt4k-3plvF4QDoFdDFYNw9C2fczg/pub?output=csv';
 
         let data = [];
-        let filteredSuggestions = [];
+        let headers = [];
 
-        // Загрузка данных из Google Таблицы
         async function loadGoogleSheetData() {
             const response = await fetch(googleSheetURL);
             const csvData = await response.text();
             parseCSVData(csvData);
         }
 
-        // Парсинг CSV данных
         function parseCSVData(csvData) {
             const rows = csvData.split('\n').map(row => row.split(','));
-            const headers = rows[0];  // Названия столбцов
+            headers = rows[0].map(header => header.trim());
             data = rows.slice(1).map(row => {
                 let obj = {};
                 row.forEach((cell, index) => {
-                    obj[headers[index].trim()] = cell.trim();
+                    obj[headers[index]] = cell.trim();
                 });
                 return obj;
             });
-            populateDropdowns(headers);  // Заполняем выпадающие списки
+            populateDropdowns();
         }
 
-        // Заполнение выпадающих списков столбцами
-        function populateDropdowns(headers) {
+        function populateDropdowns() {
             const searchColumnSelect = document.getElementById('search-column');
             const outputColumnsSelect = document.getElementById('output-columns');
 
@@ -109,40 +105,37 @@
             });
         }
 
-        // Фильтрация совпадающих значений для автозаполнения
         function filterSuggestions() {
             const input = document.getElementById('search-input').value.toLowerCase();
             const searchColumn = document.getElementById('search-column').value;
             const autocompleteList = document.getElementById('autocomplete-list');
-            autocompleteList.innerHTML = '';  // Очищаем предыдущие предложения
+            autocompleteList.innerHTML = '';
 
             if (!input || !searchColumn) {
                 return;
             }
 
-            filteredSuggestions = data.filter(item => item[searchColumn].toLowerCase().includes(input));
+            const filteredSuggestions = data.filter(item => item[searchColumn].toLowerCase().includes(input));
 
-            // Отображаем предложения
             filteredSuggestions.slice(0, 5).forEach(suggestion => {
                 const div = document.createElement('div');
                 div.classList.add('autocomplete-item');
                 div.textContent = suggestion[searchColumn];
                 div.addEventListener('click', () => {
                     document.getElementById('search-input').value = suggestion[searchColumn];
-                    autocompleteList.innerHTML = '';  // Очищаем после выбора
+                    autocompleteList.innerHTML = '';
                 });
                 autocompleteList.appendChild(div);
             });
         }
 
-        // Функция выполнения поиска по выбранному значению
         function performSearch() {
             const searchInput = document.getElementById('search-input').value.toLowerCase();
             const searchColumn = document.getElementById('search-column').value;
             const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
                                       .map(option => option.value);
             const resultsContainer = document.getElementById('search-results');
-            resultsContainer.innerHTML = '';  // Очищаем предыдущие результаты
+            resultsContainer.innerHTML = '';
 
             const filteredData = data.filter(item => item[searchColumn].toLowerCase() === searchInput);
 
@@ -168,12 +161,9 @@
             }
         }
 
-        // Добавляем слушатель для автозаполнения
         document.getElementById('search-input').addEventListener('input', filterSuggestions);
 
-        // Загружаем данные при загрузке страницы
         loadGoogleSheetData();
-
     </script>
 
 </body>
