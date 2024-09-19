@@ -13,6 +13,7 @@
             width: 100%;
             padding: 10px;
             margin-bottom: 20px;
+            box-sizing: border-box;
         }
         #search-results {
             margin-top: 20px;
@@ -23,7 +24,7 @@
             background-color: #fff;
             max-height: 150px;
             overflow-y: auto;
-            width: calc(100% - 2px); /* Учитываем ширину рамки */
+            width: calc(100% - 2px);
             z-index: 1000;
         }
         .autocomplete-item {
@@ -67,12 +68,14 @@
         let data = [];
         let headers = [];
 
+        // Загрузка данных из Google Таблицы
         async function loadGoogleSheetData() {
             const response = await fetch(googleSheetURL);
             const csvData = await response.text();
             parseCSVData(csvData);
         }
 
+        // Парсинг CSV данных
         function parseCSVData(csvData) {
             const rows = csvData.split('\n').map(row => row.split(','));
             headers = rows[0].map(header => header.trim());
@@ -86,6 +89,7 @@
             populateDropdowns();
         }
 
+        // Заполнение выпадающих списков столбцами
         function populateDropdowns() {
             const searchColumnSelect = document.getElementById('search-column');
             const outputColumnsSelect = document.getElementById('output-columns');
@@ -105,6 +109,7 @@
             });
         }
 
+        // Фильтрация совпадающих значений для автозаполнения
         function filterSuggestions() {
             const input = document.getElementById('search-input').value.toLowerCase();
             const searchColumn = document.getElementById('search-column').value;
@@ -129,6 +134,7 @@
             });
         }
 
+        // Функция выполнения поиска по выбранному значению
         function performSearch() {
             const searchInput = document.getElementById('search-input').value.toLowerCase();
             const searchColumn = document.getElementById('search-column').value;
@@ -161,8 +167,10 @@
             }
         }
 
+        // Добавляем слушатель для автозаполнения
         document.getElementById('search-input').addEventListener('input', filterSuggestions);
 
+        // Загружаем данные при загрузке страницы
         loadGoogleSheetData();
     </script>
 
