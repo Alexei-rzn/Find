@@ -17,6 +17,25 @@
         #search-results {
             margin-top: 20px;
         }
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+        }
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+        .autocomplete-item:hover {
+            background-color: #e9e9e9;
+        }
     </style>
 </head>
 <body>
@@ -31,9 +50,14 @@
     <label for="output-columns">Выберите столбцы для вывода:</label>
     <select id="output-columns" multiple></select>
 
-    <!-- Поле для ввода данных -->
+    <!-- Поле для ввода данных с автозаполнением -->
     <label for="search-input">Введите значение для поиска:</label>
-    <input type="text" id="search-input" placeholder="Введите значение" oninput="filterOptions()">
+    <div style="position: relative;">
+        <input type="text" id="search-input" placeholder="Введите значение">
+        <div id="autocomplete-list" class="autocomplete-items"></div>
+    </div>
+
+    <button onclick="performSearch()">Поиск</button>
 
     <!-- Результаты поиска -->
     <div id="search-results"></div>
@@ -43,6 +67,7 @@
         const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLbHhfgx3N9KxRC-xklVwoMzxJBjyiVh80WO7DX5U2XFKHZBMlyt4k-3plvF4QDoFdDFYNw9C2fczg/pub?output=csv';
 
         let data = [];
+        let filteredSuggestions = [];
 
         // Функция загрузки данных из Google Таблицы
         async function loadGoogleSheetData() {
@@ -85,16 +110,42 @@
             });
         }
 
-        // Функция фильтрации значений при вводе символов
-        function filterOptions() {
+        // Функция фильтрации совпадающих значений для автозаполнения
+        function filterSuggestions() {
             const input = document.getElementById('search-input').value.toLowerCase();
+            const searchColumn = document.getElementById('search-column').value;
+            const autocompleteList = document.getElementById('autocomplete-list');
+            autocompleteList.innerHTML = '';  // Очищаем предыдущие предложения
+
+            if (!input) {
+                return;
+            }
+
+            filteredSuggestions = data.filter(item => item[searchColumn].toLowerCase().includes(input));
+
+            // Отображаем предложения
+            filteredSuggestions.slice(0, 5).forEach(suggestion => {
+                const div = document.createElement('div');
+                div.classList.add('autocomplete-item');
+                div.textContent = suggestion[searchColumn];
+                div.addEventListener('click', () => {
+                    document.getElementById('search-input').value = suggestion[searchColumn];
+                    autocompleteList.innerHTML = '';  // Очищаем после выбора
+                });
+                autocompleteList.appendChild(div);
+            });
+        }
+
+        // Функция для выполнения поиска по выбранному значению
+        function performSearch() {
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
             const searchColumn = document.getElementById('search-column').value;
             const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
                                       .map(option => option.value);
             const resultsContainer = document.getElementById('search-results');
             resultsContainer.innerHTML = '';  // Очищаем предыдущие результаты
 
-            const filteredData = data.filter(item => item[searchColumn].toLowerCase().includes(input));
+            const filteredData = data.filter(item => item[searchColumn].toLowerCase() === searchInput);
 
             if (filteredData.length > 0) {
                 let tableHTML = `<table border="1"><tr>`;
@@ -117,6 +168,9 @@
                 resultsContainer.innerHTML = '<p>Ничего не найдено</p>';
             }
         }
+
+        // Добавляем слушатель для автозаполнения
+        document.getElementById('search-input').addEventListener('input', filterSuggestions);
 
         // Загружаем данные при загрузке страницы
         loadGoogleSheetData();
