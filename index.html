@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск по таблице</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #search-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        #search-results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Поиск товара</h1>
+
+    <!-- Выпадающий список для выбора столбца поиска -->
+    <label for="search-column">Выберите столбец для поиска:</label>
+    <select id="search-column">
+        <!-- Столбцы будут добавлены динамически -->
+    </select>
+    
+    <!-- Выпадающий список для выбора столбцов для вывода -->
+    <label for="output-columns">Выберите столбцы для вывода:</label>
+    <select id="output-columns" multiple>
+        <!-- Столбцы будут добавлены динамически -->
+    </select>
+
+    <!-- Поле для ввода данных -->
+    <label for="search-input">Введите значение для поиска:</label>
+    <input type="text" id="search-input" placeholder="Введите значение" oninput="filterOptions()">
+
+    <!-- Результаты поиска -->
+    <div id="search-results"></div>
+
+    <script>
+        // Пример данных (вместо загрузки из таблицы Google Sheets)
+        const data = [
+            { barcode: '123456', name: 'Товар 1', sku: '001', pallet: 'A1' },
+            { barcode: '654321', name: 'Товар 2', sku: '002', pallet: 'B1' },
+            { barcode: '789123', name: 'Товар 3', sku: '003', pallet: 'C1' },
+        ];
+
+        // Добавление столбцов в выпадающий список
+        const columns = Object.keys(data[0]);
+        const searchColumnSelect = document.getElementById('search-column');
+        const outputColumnsSelect = document.getElementById('output-columns');
+
+        columns.forEach(column => {
+            // Добавление опций для выбора столбца поиска
+            const searchOption = document.createElement('option');
+            searchOption.value = column;
+            searchOption.textContent = column;
+            searchColumnSelect.appendChild(searchOption);
+
+            // Добавление опций для выбора столбцов вывода
+            const outputOption = document.createElement('option');
+            outputOption.value = column;
+            outputOption.textContent = column;
+            outputColumnsSelect.appendChild(outputOption);
+        });
+
+        // Функция фильтрации значений при вводе символов
+        function filterOptions() {
+            const input = document.getElementById('search-input').value.toLowerCase();
+            const searchColumn = document.getElementById('search-column').value;
+            const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
+                                      .map(option => option.value);
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.innerHTML = '';  // Очищаем предыдущие результаты
+
+            const filteredData = data.filter(item => item[searchColumn].toLowerCase().includes(input));
+
+            if (filteredData.length > 0) {
+                filteredData.forEach(item => {
+                    let resultHTML = <p>Найдено в ${searchColumn}: ${item[searchColumn]}<br>;
+                    outputColumns.forEach(column => {
+                        resultHTML += ${column}: ${item[column]}<br>;
+                    });
+                    resultHTML += </p>;
+                    resultsContainer.innerHTML += resultHTML;
+                });
+            } else {
+                resultsContainer.innerHTML = '<p>Ничего не найдено</p>';
+            }
+        }
+    </script>
+
+</body>
+</html>
