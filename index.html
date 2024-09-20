@@ -10,18 +10,12 @@
             width: 100%;
             max-width: 640px;
             margin: 20px auto;
-            border: 2px solid #ccc; /* Добавляем рамку для контейнера */
         }
         video {
             width: 100%;
         }
         #result {
             margin-top: 20px;
-        }
-        #barcode-result, #numeric-value, #current-code {
-            font-weight: bold; /* Жирный шрифт для акцента */
-            color: green; /* Цвет текста */
-            font-size: 1.2em; /* Увеличиваем размер шрифта */
         }
     </style>
 </head>
@@ -30,8 +24,7 @@
     <div id="scanner-container"></div>
     <div id="result">
         <p>Результат: <span id="barcode-result">—</span></p>
-        <p>Текущий сканируемый код: <span id="current-code">—</span></p>
-        <p>Числовое значение: <span id="numeric-value">—</span></p>
+        <p>Код, который сканировали: <span id="scanned-barcode">—</span></p>
     </div>
 
     <script>
@@ -52,32 +45,24 @@
                 }
             }, function (err) {
                 if (err) {
-                    console.log("Ошибка инициализации сканера: ", err);
+                    console.log(err);
                     return;
                 }
-                console.log("Сканер инициализирован");
+                console.log("Scanner initialized");
                 Quagga.start(); // Запускаем сканер
             });
 
             Quagga.onDetected(function (data) {
-                if (data && data.codeResult && data.codeResult.code) {
-                    const code = data.codeResult.code;
-                    document.getElementById("barcode-result").innerText = code; // Выводим результат
-                    document.getElementById("numeric-value").innerText = code; // Выводим числовое значение для сверки
-                    document.getElementById("current-code").innerText = code; // Выводим текущий сканируемый код
-                    console.log("Код штрих-кода: ", code);
-                } else {
-                    console.log("Штрих-код не был распознан. Данные: ", data);
-                }
-            });
+                const code = data.codeResult.code;
+                document.getElementById("barcode-result").innerText = code;
+                document.getElementById("scanned-barcode").innerText = `Код, который сканировали: ${code}`; // Выводим сканированный код
+                console.log("Код штрих-кода: ", code);
 
-            Quagga.onProcessed(function (result) {
-                if (result && result.codeResult && result.codeResult.code) {
-                    // Отображаем текущий код, который камера видит
-                    document.getElementById("current-code").innerText = result.codeResult.code;
-                } else {
-                    document.getElementById("current-code").innerText = "—"; // Сброс при отсутствии кода
-                }
+                // Останавливаем сканер после успешного сканирования
+                Quagga.stop();
+                
+                // После сканирования можно выполнить поиск по базе данных (например, через API или таблицу)
+                // Для повторного сканирования можно заново запустить Quagga.start()
             });
         }
 
