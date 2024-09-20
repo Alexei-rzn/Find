@@ -3,72 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сканирование штрих-кода</title>
-    <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
+    <title>Поиск товара</title>
     <style>
-        #scanner-container {
-            width: 100%;
-            max-width: 640px;
-            margin: 20px auto;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
-        video {
+        #search-input {
             width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
         }
-        #result {
+        #search-results {
             margin-top: 20px;
+        }
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            background-color: #fff;
+            max-height: 150px;
+            overflow-y: auto;
+            width: calc(100% - 2px);
+            z-index: 1000;
+        }
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+        .autocomplete-item:hover {
+            background-color: #e9e9e9;
         }
     </style>
 </head>
 <body>
-    <h1>Сканирование штрих-кода</h1>
-    <div id="scanner-container"></div>
-    <div id="result">
-        <p>Результат:</p>
-        <p>Вы отсканировали: <span id="scanned-barcode">—</span></p>
+
+    <h1>Поиск товара</h1>
+
+    <!-- Выпадающий список для выбора столбца поиска -->
+    <label for="search-column">Выберите столбец для поиска:</label>
+    <select id="search-column"></select>
+    
+    <!-- Выпадающий список для выбора столбцов для вывода -->
+    <label for="output-columns">Выберите столбцы для вывода:</label>
+    <select id="output-columns" multiple></select>
+
+    <!-- Поле для ввода данных с автозаполнением -->
+    <label for="search-input">Введите значение для поиска:</label>
+    <div style="position: relative;">
+        <input type="text" id="search-input" placeholder="Введите значение">
+        <div id="autocomplete-list" class="autocomplete-items"></div>
     </div>
 
+    <button onclick="performSearch()">Поиск</button>
+    <button onclick="resetSearch()">Сброс</button>
+
+    <!-- Результаты поиска -->
+    <div id="search-results"></div>
+
     <script>
-        // Функция запуска камеры и сканера
-        function startScanner() {
-            Quagga.init({
-                inputStream: {
-                    type: "LiveStream",
-                    target: document.querySelector('#scanner-container'), // Вставляем поток видео в контейнер
-                    constraints: {
-                        width: 640,
-                        height: 480,
-                        facingMode: "environment" // Используем заднюю камеру
-                    },
-                },
-                decoder: {
-                    readers: ["ean_reader", "code_128_reader", "code_39_reader"] // Типы штрих-кодов для распознавания
-                }
-            }, function (err) {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
-                console.log("Scanner initialized");
-                Quagga.start(); // Запускаем сканер
+        const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLbHhfgx3N9KxRC-xklVwoMzxJBjyiVh80WO7DX5U2XFKHZBMlyt4k-3plvF4QDoFdDFYNw9C2fczg/pub?output=csv';
+
+        let data = [];
+        let headers = [];
+
+        // Загрузка данных из Google Таблицы
+        async function loadGoogleSheetData() {
+            const response = await fetch(googleSheetURL);
+            const csvData = await response.text();
+            parseCSVData(csvData);
+        }
+
+        // Парсинг CSV данных
+        function parseCSVData(csvData) {
+            const rows = csvData.split('\n').map(row => row.split(','));
+            headers = rows[0].map(header => header.trim());
+            data = rows.slice(1).map(row => {
+                let obj = {};
+                row.forEach((cell, index) => {
+                    obj[headers[index]] = cell.trim();
+                });
+                return obj;
             });
+            populateDropdowns();
+        }
 
-            Quagga.onDetected(function (data) {
-                const code = data.codeResult.code;
-                document.getElementById("scanned-barcode").innerText = code; // Выводим сканированный код
-                console.log("Код штрих-кода: ", code);
+        // Заполнение выпадающих списков столбцами
+        function populateDropdowns() {
+            const searchColumnSelect = document.getElementById('search-column');
+            const outputColumnsSelect = document.getElementById('output-columns');
 
-                // Останавливаем сканер после успешного сканирования
-                Quagga.stop();
-                
-                // После сканирования можно выполнить поиск по базе данных (например, через API или таблицу)
-                // Для повторного сканирования можно заново запустить Quagga.start()
+            headers.forEach(header => {
+                // Добавление опций для поиска
+                const searchOption = document.createElement('option');
+                searchOption.value = header;
+                searchOption.textContent = header;
+                searchColumnSelect.appendChild(searchOption);
+
+                // Добавление опций для вывода
+                const outputOption = document.createElement('option');
+                outputOption.value = header;
+                outputOption.textContent = header;
+                outputColumnsSelect.appendChild(outputOption);
             });
         }
 
-        // Запуск сканера при загрузке страницы
-        document.addEventListener("DOMContentLoaded", function () {
-            startScanner();
-        });
+        // Фильтрация совпадающих значений для автозаполнения
+        function filterSuggestions() {
+            const input = document.getElementById('search-input').value.toLowerCase();
+            const searchColumn = document.getElementById('search-column').value;
+            const autocompleteList = document.getElementById('autocomplete-list');
+            autocompleteList.innerHTML = '';
+
+            if (!input || !searchColumn) {
+                return;
+            }
+
+            const filteredSuggestions = data.filter(item => item[searchColumn] && item[searchColumn].toLowerCase().includes(input));
+
+            filteredSuggestions.slice(0, 5).forEach(suggestion => {
+                const div = document.createElement('div');
+                div.classList.add('autocomplete-item');
+                div.textContent = suggestion[searchColumn];
+                div.addEventListener('click', () => {
+                    document.getElementById('search-input').value = suggestion[searchColumn];
+                    autocompleteList.innerHTML = '';
+                });
+                autocompleteList.appendChild(div);
+            });
+        }
+
+        // Функция выполнения поиска по выбранному значению
+        function performSearch() {
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
+            const searchColumn = document.getElementById('search-column').value;
+            const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
+                                      .map(option => option.value);
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.innerHTML = '';
+
+            const filteredData = data.filter(item => item[searchColumn] && item[searchColumn].toLowerCase() === searchInput);
+
+            if (filteredData.length > 0) {
+                let tableHTML = `<table border="1"><tr>`;
+                outputColumns.forEach(column => {
+                    tableHTML += `<th>${column}</th>`;
+                });
+                tableHTML += `</tr>`;
+
+                filteredData.forEach(item => {
+                    tableHTML += `<tr>`;
+                    outputColumns.forEach(column => {
+                        tableHTML += `<td>${item[column]}</td>`;
+                    });
+                    tableHTML += `</tr>`;
+                });
+
+                tableHTML += `</table>`;
+                resultsContainer.innerHTML = tableHTML;
+            } else {
+                resultsContainer.innerHTML = '<p>Ничего не найдено</p>';
+            }
+        }
+
+        // Функция сброса поиска
+        function resetSearch() {
+            document.getElementById('search-input').value = '';  // Очистка поля поиска
+            document.getElementById('autocomplete-list').innerHTML = '';  // Очистка списка автозаполнения
+            document.getElementById('search-results').innerHTML = '';  // Очистка результатов поиска
+        }
+
+        // Добавляем слушатель для автозаполнения
+        document.getElementById('search-input').addEventListener('input', filterSuggestions);
+
+        // Загружаем данные при загрузке страницы
+        loadGoogleSheetData();
     </script>
+
 </body>
 </html>
