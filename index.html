@@ -28,6 +28,7 @@
     <div id="scanner-container"></div>
     <div id="result">
         <p>Результат: <span id="barcode-result">—</span></p>
+        <p>Текущий сканируемый код: <span id="current-code">—</span></p>
         <p>Числовое значение: <span id="numeric-value">—</span></p>
     </div>
 
@@ -61,6 +62,7 @@
                     const code = data.codeResult.code;
                     document.getElementById("barcode-result").innerText = code; // Выводим результат
                     document.getElementById("numeric-value").innerText = code; // Выводим числовое значение для сверки
+                    document.getElementById("current-code").innerText = code; // Выводим текущий сканируемый код
                     console.log("Код штрих-кода: ", code);
                 } else {
                     console.log("Штрих-код не был распознан. Данные: ", data);
@@ -69,9 +71,10 @@
 
             Quagga.onProcessed(function (result) {
                 if (result && result.codeResult && result.codeResult.code) {
-                    console.log("Обрабатываемый код: ", result.codeResult.code);
+                    // Отображаем текущий код, который камера видит
+                    document.getElementById("current-code").innerText = result.codeResult.code;
                 } else {
-                    console.log("Код не распознан. Попробуйте снова.");
+                    document.getElementById("current-code").innerText = "—"; // Сброс при отсутствии кода
                 }
             });
         }
