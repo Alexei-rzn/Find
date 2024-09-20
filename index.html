@@ -65,9 +65,14 @@
                 } else {
                     console.log("Штрих-код не был распознан. Данные: ", data);
                 }
+            });
 
-                // Останавливаем сканер после успешного сканирования
-                Quagga.stop();
+            Quagga.onProcessed(function (result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    console.log("Обрабатываемый код: ", result.codeResult.code);
+                } else {
+                    console.log("Код не распознан. Попробуйте снова.");
+                }
             });
         }
 
