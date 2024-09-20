@@ -44,23 +44,24 @@
                 }
             }, function (err) {
                 if (err) {
-                    console.log(err);
+                    console.log("Ошибка инициализации сканера: ", err);
                     return;
                 }
-                console.log("Scanner initialized");
+                console.log("Сканер инициализирован");
                 Quagga.start(); // Запускаем сканер
             });
 
             Quagga.onDetected(function (data) {
-                const code = data.codeResult.code;
-                document.getElementById("barcode-result").innerText = code; // Выводим результат после слова "Результат:"
-                console.log("Код штрих-кода: ", code);
+                if (data && data.codeResult && data.codeResult.code) {
+                    const code = data.codeResult.code;
+                    document.getElementById("barcode-result").innerText = code; // Выводим результат после слова "Результат:"
+                    console.log("Код штрих-кода: ", code);
+                } else {
+                    console.log("Штрих-код не был распознан. Данные: ", data);
+                }
 
                 // Останавливаем сканер после успешного сканирования
                 Quagga.stop();
-                
-                // После сканирования можно выполнить поиск по базе данных (например, через API или таблицу)
-                // Для повторного сканирования можно заново запустить Quagga.start()
             });
         }
 
